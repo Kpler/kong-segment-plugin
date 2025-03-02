@@ -1,57 +1,133 @@
--- local helpers = require "spec.helpers"
+local cjson = require "cjson"
+
 local PLUGIN_NAME = "segment"
+
+-- Test data definition
+
+local TEST_DATA = {
+    VALID_REQUEST = {
+        scheme = "https",
+        host = "api.kpler.com",
+        port = 443,
+        path = "/api/v1/products",
+        raw_query = "query=value",
+        method = "GET"
+    }
+}
+
+-- Fixtures definition
+
+local build_kong_fixture = function()
+    local state = {}
+    return {
+        log = {
+            info = print,
+            debug = print
+        },
+        request = {
+            get_scheme = function()
+                return state.request.scheme
+            end,
+            get_host = function()
+                return state.request.host
+            end,
+            get_port = function()
+                return state.request.port
+            end,
+            get_path = function()
+                return state.request.path
+            end,
+            get_raw_query = function()
+                return state.request.raw_query
+            end
+        },
+        set_incoming_request = function(request)
+            state.request = request
+        end,
+        reset_state = function()
+            state = {}
+        end
+    }
+end
+
+local build_segment_fixture = function()
+    local state = {
+        received_events = {}
+    }
+    return {
+        resty_http_fixture = {
+            new = function()
+                return {
+                    request_uri = function(self, url, options)
+                        if not string.match(url, "^https://api%.segment%.io/") then
+                            return nil, "DNS resolution failed"
+                        elseif url == "https://api.segment.io/v1/track" and options.method == "POST" then
+                            table.insert(state.received_events, cjson.decode(options.body))
+                            return {
+                                status = 200,
+                                body = '{}'
+                            }, nil
+                        else
+                            return {
+                                status = 404,
+                                body = ""
+                            }, nil
+                        end
+                    end
+                }
+            end
+        },
+        get_received_events = function()
+            return state.received_events
+        end
+    }
+end
+
+local build_ngx_fixture = function()
+    return {
+        timer = {
+            at = function(delay, callback, url)
+                -- No need to simulate async execution here, we just execute the callback immediately
+                callback(false, url)
+            end
+        }
+    }
+end
+
+-- Test definition
 
 describe(PLUGIN_NAME .. ": (unit)", function()
 
     local plugin, config
-    local header_name, header_value
+    local segment_fixture
 
     setup(function()
-        _G.kong = { -- mock the basic Kong function we use in our plugin
-            log = {
-                inspect = function()
-                end
-            },
-            service = {
-                request = {
-                    set_header = function(name, val)
-                        header_name = name
-                        header_value = val
-                    end
-                }
-            },
-            response = {
-                set_header = function(name, val)
-                    header_name = name
-                    header_value = val
-                end
-            }
-        }
-
-        -- load the plugin code
+        -- overriding package loaded should happen before plugin loading
+        segment_fixture = build_segment_fixture()
+        package.loaded["resty.http"] = segment_fixture.resty_http_fixture
+        _G.kong = build_kong_fixture()
+        _G.ngx = build_ngx_fixture()
         plugin = require("kong.plugins." .. PLUGIN_NAME .. ".handler")
     end)
 
     before_each(function()
-        -- clear the upvalues to prevent test results mixing between tests
-        header_name = nil
-        header_value = nil
-        config = {
-            request_header = "hello-world",
-            response_header = "bye-world"
-        }
+        kong.reset_state()
+        config = {}
     end)
 
-    it("sets a 'hello-world' header on a request", function()
-        plugin:access(config)
-        assert.equal("hello-world", header_name)
-        assert.equal("this is on a request", header_value)
-    end)
+    describe("Given a valid request, when the plugin is executed,", function()
+        before_each(function()
+            kong.set_incoming_request(TEST_DATA.VALID_REQUEST)
+            plugin:log(config)
+        end)
 
-    it("gets a 'bye-world' header on a response", function()
-        plugin:header_filter(config)
-        assert.equal("bye-world", header_name)
-        assert.equal("this is on the response", header_value)
-    end)
+        it("it should send a track event data to segment", function()
+            local segment_received_events = segment_fixture.get_received_events()
+            assert.is.equal(#segment_received_events, 1)
+            assert.is.same(segment_received_events[1], {
+                url = "https://api.kpler.com/api/v1/products?query=value"
+            })
+        end)
 
+    end)
 end)

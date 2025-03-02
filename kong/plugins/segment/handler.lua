@@ -80,7 +80,7 @@ local function async_http_request(premature, url)
     if premature then
         return
     end
-    make_http_request("https://webhook.site/054e27ce-d79a-493d-8ca0-49864fa018fb", {
+    make_http_request("https://api.segment.io/v1/track", {
         url = url
     })
 end
