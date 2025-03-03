@@ -9,9 +9,14 @@ local TEST_DATA = {
         scheme = "https",
         host = "api.kpler.com",
         port = 443,
-        path = "/api/v1/products",
-        raw_query = "query=value",
-        method = "GET"
+        path = "/v2/cargo/flows",
+        raw_query = "flowDirection=Import&granularity=daily&split=Grades",
+        method = "GET",
+        headers = {
+          [x-access-token] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJodHRwczovL2twbGVyLmNvbS91c2VySWQiOjF9.holp-rKGHuBhBF91ridgosecMobDjc0-n5vakZb7xdk",
+          [user-agent] = "Mozilla/5.0",
+          [x-kong-request-id] = "12345"
+        }
     }
 }
 
@@ -120,7 +125,20 @@ describe(PLUGIN_NAME .. ": (unit)", function()
             local segment_received_events = segment_fixture.get_received_events()
             assert.is.equal(#segment_received_events, 1)
             assert.is.same(segment_received_events[1], {
-                url = "https://api.kpler.com/api/v1/products?query=value"
+                userId = "b07c680c-14c1-4b47-930d-0ddb01d9a9e7",
+                messageId = "random-message-id",
+                context = {
+                  userAgent = "Mozilla/5.0",
+                  ip = "222.222.222.222"
+                },
+                properties = {
+                  url = "https://api.kpler.com/v2/cargo/products?query=value",
+                  query_params = {
+                    flowDirection = "Import",
+                    granularity = "daily",
+                    split = "Grades"
+                  }
+                },
             })
         end)
 
