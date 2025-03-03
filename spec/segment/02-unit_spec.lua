@@ -43,9 +43,6 @@ local build_kong_fixture = function()
         },
         set_incoming_request = function(request)
             state.request = request
-        end,
-        reset_state = function()
-            state = {}
         end
     }
 end
@@ -101,17 +98,15 @@ describe(PLUGIN_NAME .. ": (unit)", function()
     local plugin, config
     local segment_fixture
 
-    setup(function()
+    before_each(function()
         -- overriding package loaded should happen before plugin loading
         segment_fixture = build_segment_fixture()
         package.loaded["resty.http"] = segment_fixture.resty_http_fixture
+
         _G.kong = build_kong_fixture()
         _G.ngx = build_ngx_fixture()
-        plugin = require("kong.plugins." .. PLUGIN_NAME .. ".handler")
-    end)
 
-    before_each(function()
-        kong.reset_state()
+        plugin = require("kong.plugins." .. PLUGIN_NAME .. ".handler")
         config = {}
     end)
 
