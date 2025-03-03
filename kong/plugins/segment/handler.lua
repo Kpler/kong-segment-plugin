@@ -1,5 +1,7 @@
 local cjson = require "cjson"
 local http = require("resty.http")
+local jwt_utils = require("kong.plugins.segment.modules.jwt_utils")
+local Event = require("kong.plugins.segment.modules.event")
 -- If you're not sure your plugin is executing, uncomment the line below and restart Kong
 -- then it will throw an error which indicates the plugin is being loaded at least.
 -- assert(ngx.get_phase() == "timer", "The world is coming to an end!")
@@ -21,17 +23,14 @@ local plugin = {
 -- handles more initialization, but AFTER the worker process has been forked/created.
 -- It runs in the 'init_worker_by_lua_block'
 function plugin:init_worker()
-
-    -- your custom code here
-    kong.log.debug("saying hi from the 'init_worker' handler")
-
+    kong.log.debug("Initializing Segment plugin")
 end -- ]]
 
 ---[[ Executed every time a plugin config changes.
 -- This can run in the `init_worker` or `timer` phase.
 -- @param configs table|nil A table with all the plugin configs of this plugin type.
 function plugin:configure(configs)
-    kong.log.notice("saying hi from the 'configure' handler, got ", (configs and #configs or 0), " configs")
+    kong.log.notice("Configuring Segment plugin", (configs and #configs or 0), " configs")
 
     if configs == nil then
         return -- no configs, nothing to do
@@ -76,13 +75,11 @@ local function make_http_request(url, data)
     return res.body
 end
 
-local function async_http_request(premature, url)
+local function async_http_request(premature, event)
     if premature then
         return
     end
-    make_http_request("https://api.segment.io/v1/track", {
-        url = url
-    })
+    make_http_request("https://api.segment.io/v1/track", event:to_table())
 end
 
 -- runs in the 'log_by_lua_block'
@@ -94,6 +91,15 @@ function plugin:log(plugin_conf)
     local path = kong.request.get_path()
     local query = kong.request.get_raw_query()
 
+    local userId, err = jwt_utils.get_user_id()
+
+    if err then
+      kong.log.warn(err)
+      return
+    end
+
+    local event = Event:new(userId)
+
     local url = scheme .. "://" .. host
     if (scheme == "http" and port ~= 80) or (scheme == "https" and port ~= 443) then
         url = url .. ":" .. port
@@ -104,9 +110,9 @@ function plugin:log(plugin_conf)
     end
 
     -- Schedule the HTTP request to be made asynchronously
-    ngx.timer.at(0, async_http_request, url)
+    ngx.timer.at(0, async_http_request, event)
 
-    kong.log.debug("Full URL: ", url)
+    kong.log.debug("Full URL: ", event)
 
 end --
 

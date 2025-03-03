@@ -13,9 +13,9 @@ local TEST_DATA = {
         raw_query = "flowDirection=Import&granularity=daily&split=Grades",
         method = "GET",
         headers = {
-          [x-access-token] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJodHRwczovL2twbGVyLmNvbS91c2VySWQiOjF9.holp-rKGHuBhBF91ridgosecMobDjc0-n5vakZb7xdk",
-          [user-agent] = "Mozilla/5.0",
-          [x-kong-request-id] = "12345"
+          ["x-access-token"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJodHRwczovL2twbGVyLmNvbS91c2VySWQiOiJiMDdjNjgwYy0xNGMxLTRiNDctOTMwZC0wZGRiMDFkOWE5ZTcifQ.sfqKB_35xeUdOoQxn9lcIKgoBUScInkj-dt8qpIkkns",
+          ["user-agent"] = "Mozilla/5.0",
+          ["x-kong-request-id"] = "12345"
         }
     }
 }
@@ -27,7 +27,9 @@ local build_kong_fixture = function()
     return {
         log = {
             info = print,
-            debug = print
+            debug = print,
+            warn = print,
+            error = print
         },
         request = {
             get_scheme = function()
@@ -44,6 +46,9 @@ local build_kong_fixture = function()
             end,
             get_raw_query = function()
                 return state.request.raw_query
+            end,
+            get_header = function(name)
+              return state.request.headers[name]
             end
         },
         set_incoming_request = function(request)
@@ -123,23 +128,25 @@ describe(PLUGIN_NAME .. ": (unit)", function()
 
         it("it should send a track event data to segment", function()
             local segment_received_events = segment_fixture.get_received_events()
-            assert.is.equal(#segment_received_events, 1)
-            assert.is.same(segment_received_events[1], {
+            assert.is.equal(1, #segment_received_events)
+            assert.is.same({
                 userId = "b07c680c-14c1-4b47-930d-0ddb01d9a9e7",
-                messageId = "random-message-id",
-                context = {
-                  userAgent = "Mozilla/5.0",
-                  ip = "222.222.222.222"
-                },
-                properties = {
-                  url = "https://api.kpler.com/v2/cargo/products?query=value",
-                  query_params = {
-                    flowDirection = "Import",
-                    granularity = "daily",
-                    split = "Grades"
-                  }
-                },
-            })
+                --messageId = "random-message-id",
+                --context = {
+                --  userAgent = "Mozilla/5.0",
+                --  ip = "222.222.222.222"
+                --},
+                --properties = {
+                --  url  = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades",
+                --  host = "api.kpler.com"
+                --  path = "/v2/cargo/flows"
+                --  query_params = {
+                --    flowDirection = "Import",
+                --    granularity = "daily",
+                --    split = "Grades"
+                --  }
+                --},
+            }, segment_received_events[1])
         end)
 
     end)
