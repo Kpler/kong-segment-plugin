@@ -44,4 +44,16 @@ function RequestContext.get_ip()
   return kong.client.get_ip()
 end
 
+function RequestContext.get_host()
+  return kong.request.get_host()
+end
+
+function RequestContext.get_path()
+  return kong.request.get_path()
+end
+
+function RequestContext.get_query_params()
+
+end
+
 return RequestContext

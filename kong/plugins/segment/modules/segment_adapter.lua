@@ -14,15 +14,15 @@ function SegmentAdapter:convert()
   if err then return nil, err end
 
   local requestId, userAgent = RequestContext.get_headers_info()
-  local url = RequestContext.get_full_url()
-  local ip = RequestContext.get_ip()
 
   return SegmentEvent:new({
-    url = url,
+    url = RequestContext.get_full_url(),
     userId = userId,
     userAgent = userAgent,
     messageId = requestId,
-    ip = ip
+    ip = RequestContext.get_ip(),
+    host = RequestContext.get_host(),
+    path = RequestContext.get_path()
   }), nil
 end
 

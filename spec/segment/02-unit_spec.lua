@@ -148,8 +148,8 @@ describe(PLUGIN_NAME .. ": (unit)", function()
                 },
                 properties = {
                   url  = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades",
-                --  host = "api.kpler.com"
-                --  path = "/v2/cargo/flows"
+                  host = "api.kpler.com",
+                  path = "/v2/cargo/flows",
                 --  query_params = {
                 --    flowDirection = "Import",
                 --    granularity = "daily",
