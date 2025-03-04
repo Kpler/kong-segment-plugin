@@ -17,7 +17,8 @@ local TEST_DATA = {
           ["user-agent"] = "Mozilla/5.0",
           ["x-kong-request-id"] = "sample-request-id"
         }
-    }
+    },
+    IP_ADDRESS = "222.222.222.222"
 }
 
 -- Fixtures definition
@@ -51,8 +52,16 @@ local build_kong_fixture = function()
               return state.request.headers[name]
             end
         },
+        client = {
+          get_ip = function()
+            return state.ip
+          end
+        },
         set_incoming_request = function(request)
             state.request = request
+        end,
+        set_ip_address = function(ip)
+          state.ip = ip
         end
     }
 end
@@ -123,6 +132,7 @@ describe(PLUGIN_NAME .. ": (unit)", function()
     describe("Given a valid request, when the plugin is executed,", function()
         before_each(function()
             kong.set_incoming_request(TEST_DATA.VALID_REQUEST)
+            kong.set_ip_address(TEST_DATA.IP_ADDRESS)
             plugin:log(config)
         end)
 
@@ -134,7 +144,7 @@ describe(PLUGIN_NAME .. ": (unit)", function()
                 messageId = "sample-request-id",
                 context = {
                   userAgent = "Mozilla/5.0",
-                --  ip = "222.222.222.222"
+                  ip = "222.222.222.222"
                 },
                 properties = {
                   url  = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades",

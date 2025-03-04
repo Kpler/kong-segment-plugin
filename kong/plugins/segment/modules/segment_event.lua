@@ -10,6 +10,7 @@ function SegmentEvent:new(params)
   self.userId = params.userId
   self.messageId = params.messageId
   self.userAgent = params.userAgent
+  self.ip = params.ip
 
   return self
 end
@@ -20,7 +21,8 @@ function SegmentEvent:to_json()
     userId = self.userId,
     messageId = self.messageId,
     context = {
-      userAgent = self.userAgent
+      userAgent = self.userAgent,
+      ip = self.ip
     },
     properties = {
       url = self.url,
