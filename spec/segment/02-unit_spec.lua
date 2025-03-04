@@ -11,6 +11,11 @@ local TEST_DATA = {
         port = 443,
         path = "/v2/cargo/flows",
         raw_query = "flowDirection=Import&granularity=daily&split=Grades",
+        query = {
+          flowDirection = "Import",
+          granularity = "daily",
+          split = "Grades"
+        },
         method = "GET",
         headers = {
           ["x-access-token"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJodHRwczovL2twbGVyLmNvbS91c2VySWQiOiJiMDdjNjgwYy0xNGMxLTRiNDctOTMwZC0wZGRiMDFkOWE5ZTcifQ.sfqKB_35xeUdOoQxn9lcIKgoBUScInkj-dt8qpIkkns",
@@ -50,6 +55,9 @@ local build_kong_fixture = function()
             end,
             get_header = function(name)
               return state.request.headers[name]
+            end,
+            get_query = function()
+              return state.request.query
             end
         },
         client = {
@@ -150,11 +158,11 @@ describe(PLUGIN_NAME .. ": (unit)", function()
                   url  = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades",
                   host = "api.kpler.com",
                   path = "/v2/cargo/flows",
-                --  query_params = {
-                --    flowDirection = "Import",
-                --    granularity = "daily",
-                --    split = "Grades"
-                --  }
+                  query_params = {
+                    flowDirection = "Import",
+                    granularity = "daily",
+                    split = "Grades"
+                  }
                 },
             }, segment_received_events[1])
         end)

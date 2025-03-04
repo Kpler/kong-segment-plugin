@@ -22,7 +22,8 @@ function SegmentAdapter:convert()
     messageId = requestId,
     ip = RequestContext.get_ip(),
     host = RequestContext.get_host(),
-    path = RequestContext.get_path()
+    path = RequestContext.get_path(),
+    query_params = RequestContext.get_query_params()
   }), nil
 end
 

@@ -53,7 +53,7 @@ function RequestContext.get_path()
 end
 
 function RequestContext.get_query_params()
-
+  return kong.request.get_query()
 end
 
 return RequestContext

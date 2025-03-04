@@ -13,6 +13,7 @@ function SegmentEvent:new(params)
   self.ip = params.ip
   self.host = params.host
   self.path = params.path
+  self.query_params = params.query_params
 
   return self
 end
@@ -29,7 +30,8 @@ function SegmentEvent:to_json()
     properties = {
       url = self.url,
       host = self.host,
-      path = self.path
+      path = self.path,
+      query_params = self.query_params,
     }
   })
 end
