@@ -1,7 +1,5 @@
-local cjson = require "cjson"
 local http = require("resty.http")
-local jwt_utils = require("kong.plugins.segment.modules.jwt_utils")
-local Event = require("kong.plugins.segment.modules.event")
+local RequestInfo = require("kong.plugins.segment.modules.request_info")
 -- If you're not sure your plugin is executing, uncomment the line below and restart Kong
 -- then it will throw an error which indicates the plugin is being loaded at least.
 -- assert(ngx.get_phase() == "timer", "The world is coming to an end!")
@@ -51,11 +49,8 @@ function plugin:certificate(plugin_conf)
 
 end --]]
 
-local function make_http_request(url, data)
+local function make_http_request(url, segment_event)
     local httpc = http.new()
-
-    local json_data = cjson.encode(data)
-
     -- Perform the request
     local res, err = httpc:request_uri(url, {
         method = "POST",
@@ -63,7 +58,7 @@ local function make_http_request(url, data)
             ["Content-Type"] = "application/json"
         },
         ssl_verify = false,
-        body = json_data
+        body = segment_event:to_json()
     })
 
     if not res then
@@ -75,45 +70,25 @@ local function make_http_request(url, data)
     return res.body
 end
 
-local function async_http_request(premature, event)
+local function async_http_request(premature, segmentEvent)
     if premature then
         return
     end
-    make_http_request("https://api.segment.io/v1/track", event:to_table())
+
+    make_http_request("https://api.segment.io/v1/track", segmentEvent)
 end
 
 -- runs in the 'log_by_lua_block'
 function plugin:log(plugin_conf)
-
-    local scheme = kong.request.get_scheme()
-    local host = kong.request.get_host()
-    local port = kong.request.get_port()
-    local path = kong.request.get_path()
-    local query = kong.request.get_raw_query()
-
-    local userId, err = jwt_utils.get_user_id()
-
+    local requestInfo = RequestInfo:new(kong.request)
+    local segmentEvent, err = requestInfo:to_segment_event()
     if err then
-      kong.log.warn(err)
+      kong.log.debug("Error building Segment event ", err)
       return
     end
 
-    local event = Event:new(userId)
-
-    local url = scheme .. "://" .. host
-    if (scheme == "http" and port ~= 80) or (scheme == "https" and port ~= 443) then
-        url = url .. ":" .. port
-    end
-    url = url .. path
-    if query and query ~= "" then
-        url = url .. "?" .. query
-    end
-
     -- Schedule the HTTP request to be made asynchronously
-    ngx.timer.at(0, async_http_request, event)
-
-    kong.log.debug("Full URL: ", event)
-
+    ngx.timer.at(0, async_http_request, segmentEvent)
 end --
 
 -- return our plugin object

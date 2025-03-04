@@ -15,7 +15,7 @@ local TEST_DATA = {
         headers = {
           ["x-access-token"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJodHRwczovL2twbGVyLmNvbS91c2VySWQiOiJiMDdjNjgwYy0xNGMxLTRiNDctOTMwZC0wZGRiMDFkOWE5ZTcifQ.sfqKB_35xeUdOoQxn9lcIKgoBUScInkj-dt8qpIkkns",
           ["user-agent"] = "Mozilla/5.0",
-          ["x-kong-request-id"] = "12345"
+          ["x-kong-request-id"] = "sample-request-id"
         }
     }
 }
@@ -131,7 +131,8 @@ describe(PLUGIN_NAME .. ": (unit)", function()
             assert.is.equal(1, #segment_received_events)
             assert.is.same({
                 userId = "b07c680c-14c1-4b47-930d-0ddb01d9a9e7",
-                --messageId = "random-message-id",
+                messageId = "sample-request-id",
+                url = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades"
                 --context = {
                 --  userAgent = "Mozilla/5.0",
                 --  ip = "222.222.222.222"
