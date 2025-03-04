@@ -3,6 +3,7 @@ local jwt_utils = require("kong.plugins.segment.modules.jwt_utils")
 
 local RequestInfo = {}
 local get_full_url
+local get_headers_info
 
 RequestInfo.__index = RequestInfo
 
@@ -21,23 +22,28 @@ function RequestInfo:to_segment_event()
     return nil, get_user_id_err
   end
 
-  local requestId = self.kongRequest.get_header("x-kong-request-id")
-
   if not requestId then
     kong.log.warn("Could not retrieve request id from request, sending empty value")
     requestId = ""
   end
 
+  local requestId, userAgent = get_headers_info(self)
   local url = get_full_url(self)
 
-  local segmentEvent =  SegmentEvent:new(
-    url,
-    userId,
-    requestId
-  )
+  local segmentEvent =  SegmentEvent:new{
+    url = url,
+    userId = userId,
+    messageId = requestId,
+    userAgent = userAgent,
+  }
   return segmentEvent, nil
 end
 
+get_headers_info = function(self)
+  local requestId = self.kongRequest.get_header("x-kong-request-id")
+  local userAgent = self.kongRequest.get_header("user-agent")
+  return requestId, userAgent
+end
 
 get_full_url = function(self)
   local scheme = self.kongRequest.get_scheme()

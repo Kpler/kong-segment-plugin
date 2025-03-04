@@ -132,13 +132,12 @@ describe(PLUGIN_NAME .. ": (unit)", function()
             assert.is.same({
                 userId = "b07c680c-14c1-4b47-930d-0ddb01d9a9e7",
                 messageId = "sample-request-id",
-                url = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades"
-                --context = {
-                --  userAgent = "Mozilla/5.0",
+                context = {
+                  userAgent = "Mozilla/5.0",
                 --  ip = "222.222.222.222"
-                --},
-                --properties = {
-                --  url  = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades",
+                },
+                properties = {
+                  url  = "https://api.kpler.com/v2/cargo/flows?flowDirection=Import&granularity=daily&split=Grades",
                 --  host = "api.kpler.com"
                 --  path = "/v2/cargo/flows"
                 --  query_params = {
@@ -146,7 +145,7 @@ describe(PLUGIN_NAME .. ": (unit)", function()
                 --    granularity = "daily",
                 --    split = "Grades"
                 --  }
-                --},
+                },
             }, segment_received_events[1])
         end)
 
