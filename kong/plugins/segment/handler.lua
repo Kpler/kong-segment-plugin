@@ -1,5 +1,6 @@
 local http = require("resty.http")
 local RequestInfo = require("kong.plugins.segment.modules.request_info")
+local SegmentAdapter = require("kong.plugins.segment.modules.segment_adapter")
 -- If you're not sure your plugin is executing, uncomment the line below and restart Kong
 -- then it will throw an error which indicates the plugin is being loaded at least.
 -- assert(ngx.get_phase() == "timer", "The world is coming to an end!")
@@ -81,7 +82,9 @@ end
 -- runs in the 'log_by_lua_block'
 function plugin:log(plugin_conf)
     local requestInfo = RequestInfo:new(kong.request)
-    local segmentEvent, err = requestInfo:to_segment_event()
+    local adapter = SegmentAdapter:new(requestInfo)
+    local segmentEvent, err = adapter:convert()
+
     if err then
       kong.log.debug("Error building Segment event ", err)
       return
