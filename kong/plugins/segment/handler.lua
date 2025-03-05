@@ -10,8 +10,8 @@ local SegmentService = require("kong.plugins.segment.modules.segment_service")
 -- on when exactly they are invoked and what limitations each handler has.
 ---------------------------------------------------------------------------------------------
 local plugin = {
-    PRIORITY = 1000, -- set the plugin priority, which determines plugin execution order
-    VERSION = "0.1" -- version in X.Y.Z format. Check hybrid-mode compatibility requirements.
+  PRIORITY = 1000, -- set the plugin priority, which determines plugin execution order
+  VERSION = "0.1"  -- version in X.Y.Z format. Check hybrid-mode compatibility requirements.
 }
 
 -- do initialization here, any module level code runs in the 'init_by_lua_block',
@@ -21,21 +21,20 @@ local plugin = {
 -- handles more initialization, but AFTER the worker process has been forked/created.
 -- It runs in the 'init_worker_by_lua_block'
 function plugin:init_worker()
-    kong.log.debug("Initializing Segment plugin")
+  kong.log.debug("Initializing Segment plugin")
 end -- ]]
 
 ---[[ Executed every time a plugin config changes.
 -- This can run in the `init_worker` or `timer` phase.
 -- @param configs table|nil A table with all the plugin configs of this plugin type.
 function plugin:configure(configs)
-    kong.log.notice("Configuring Segment plugin", (configs and #configs or 0), " configs")
+  kong.log.notice("Configuring Segment plugin", (configs and #configs or 0), " configs")
 
-    if configs == nil then
-        return -- no configs, nothing to do
-    end
+  if configs == nil then
+    return -- no configs, nothing to do
+  end
 
-    -- your custom code here
-
+  -- your custom code here
 end -- ]]
 
 --[[ runs in the 'ssl_certificate_by_lua_block'
@@ -51,14 +50,14 @@ end --]]
 
 -- runs in the 'log_by_lua_block'
 function plugin:log(plugin_conf)
-    local segment_service = SegmentService:new(plugin_conf.write_key)
-    local adapter = SegmentAdapter:new()
-    local segmentEvent, err = adapter:convert()
+  local segment_service = SegmentService:new(plugin_conf.write_key, plugin_conf.segment_url)
+  local adapter = SegmentAdapter:new()
+  local segmentEvent, err = adapter:convert()
 
-    if err then
-      kong.log.debug("Error building Segment event ", err)
-      return
-    end
+  if err then
+    kong.log.debug("Error building Segment event ", err)
+    return
+  end
 
   segment_service:track_async(segmentEvent)
 end --

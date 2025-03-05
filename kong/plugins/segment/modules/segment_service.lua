@@ -6,21 +6,22 @@ SegmentService.__index = SegmentService
 local make_segment_request
 local async_http_request
 
-function SegmentService:new(write_key)
+function SegmentService:new(write_key, segment_url)
   local self = setmetatable({}, SegmentService)
   self.write_key = write_key
+  self.segment_url = segment_url
 
   return self
 end
 
 function SegmentService:track_async(segmentEvent)
-  local url = constants.SEGMENT_API_BASE_URL .. "/track"
+  local url = self.segment_url .. "/v1/track"
   local json_segment_data = segmentEvent:to_json(self.write_key)
   -- Schedule the HTTP request to be made asynchronously
-  ngx.timer.at(0, async_http_request, {url = url, json_data = json_segment_data})
+  ngx.timer.at(0, async_http_request, { url = url, json_data = json_segment_data })
 end
 
-make_segment_request = function (url, json_data)
+make_segment_request = function(url, json_data)
   local httpc = http.new()
   -- Perform the request
   local res, err = httpc:request_uri(url, {
@@ -41,7 +42,7 @@ make_segment_request = function (url, json_data)
   return res.body
 end
 
-async_http_request = function (premature, params)
+async_http_request = function(premature, params)
   if premature then
     return
   end

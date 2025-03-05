@@ -6,7 +6,7 @@ function RequestContext.get_user_id()
   local userId, get_user_id_err = jwt_utils.get_user_id()
 
   if get_user_id_err then
-    kong.log.error(get_user_id_err)
+    kong.log.err(get_user_id_err)
     return nil, get_user_id_err
   end
   return userId, nil
