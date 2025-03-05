@@ -10,6 +10,7 @@ function SegmentAdapter:new()
 end
 
 function SegmentAdapter:convert()
+  kong.log.debug("Starting to create segment event ")
   local userId, err = RequestContext.get_user_id()
   if err then return nil, err end
 

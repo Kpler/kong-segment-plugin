@@ -14,6 +14,7 @@ function SegmentService:new(write_key)
 end
 
 function SegmentService:track_async(segmentEvent)
+  kong.log.debug("Sending segment event")
   local url = constants.SEGMENT_API_BASE_URL .. "/track"
   local json_segment_data = segmentEvent:to_json(self.write_key)
   -- Schedule the HTTP request to be made asynchronously

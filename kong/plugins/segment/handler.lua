@@ -21,6 +21,7 @@ local plugin = {
 -- handles more initialization, but AFTER the worker process has been forked/created.
 -- It runs in the 'init_worker_by_lua_block'
 function plugin:init_worker()
+    print("Initialize")
     kong.log.debug("Initializing Segment plugin")
 end -- ]]
 
@@ -51,6 +52,8 @@ end --]]
 
 -- runs in the 'log_by_lua_block'
 function plugin:log(plugin_conf)
+    kong.log.debug("Entering log phase")
+    print("Logging")
     local segment_service = SegmentService:new(plugin_conf.write_key)
     local adapter = SegmentAdapter:new()
     local segmentEvent, err = adapter:convert()

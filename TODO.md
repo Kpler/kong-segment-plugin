@@ -1,6 +1,8 @@
 
 - [ ] Configure nix.shell for easy initialisation
-- [] MessageId
-- [] UserId
-- [] CiCd
-- [] casing
+- [ ] CiCd
+- [ ] casing
+- [ ] Integration tests
+- [ ] Logging
+- [x] MessageId
+- [x] UserId
