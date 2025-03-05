@@ -1,9 +1,6 @@
-local SegmentEvent = require "kong.plugins.segment.modules.segment_event"
 local jwt_utils = require("kong.plugins.segment.modules.jwt_utils")
 
 local RequestContext = {}
-
-RequestContext.__index = RequestContext
 
 function RequestContext.get_user_id()
   local userId, get_user_id_err = jwt_utils.get_user_id()

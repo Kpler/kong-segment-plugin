@@ -1,6 +1,5 @@
-local http = require("resty.http")
-local RequestContext = require("kong.plugins.segment.modules.request_context")
 local SegmentAdapter = require("kong.plugins.segment.modules.segment_adapter")
+local SegmentService = require("kong.plugins.segment.modules.segment_service")
 -- If you're not sure your plugin is executing, uncomment the line below and restart Kong
 -- then it will throw an error which indicates the plugin is being loaded at least.
 -- assert(ngx.get_phase() == "timer", "The world is coming to an end!")
@@ -50,35 +49,6 @@ function plugin:certificate(plugin_conf)
 
 end --]]
 
-local function make_http_request(url, segment_event)
-    local httpc = http.new()
-    -- Perform the request
-    local res, err = httpc:request_uri(url, {
-        method = "POST",
-        headers = {
-            ["Content-Type"] = "application/json"
-        },
-        ssl_verify = false,
-        body = segment_event:to_json()
-    })
-
-    if not res then
-        kong.log.err("Failed to make HTTP request: ", err)
-        return nil, err
-    end
-
-    kong.log.info("HTTP response: ", res.body)
-    return res.body
-end
-
-local function async_http_request(premature, segmentEvent)
-    if premature then
-        return
-    end
-
-    make_http_request("https://api.segment.io/v1/track", segmentEvent)
-end
-
 -- runs in the 'log_by_lua_block'
 function plugin:log(plugin_conf)
     local adapter = SegmentAdapter:new()
@@ -89,8 +59,7 @@ function plugin:log(plugin_conf)
       return
     end
 
-    -- Schedule the HTTP request to be made asynchronously
-    ngx.timer.at(0, async_http_request, segmentEvent)
+    SegmentService.track_async(segmentEvent)
 end --
 
 -- return our plugin object
