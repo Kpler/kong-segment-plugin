@@ -19,7 +19,7 @@ function SegmentEvent:new(params)
 end
 
 
-function SegmentEvent:to_json()
+function SegmentEvent:to_json(write_key)
   return cjson.encode({
     userId = self.userId,
     messageId = self.messageId,
@@ -32,7 +32,8 @@ function SegmentEvent:to_json()
       host = self.host,
       path = self.path,
       query_params = self.query_params,
-    }
+    },
+    writeKey = write_key
   })
 end
 

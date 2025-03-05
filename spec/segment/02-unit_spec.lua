@@ -134,7 +134,7 @@ describe(PLUGIN_NAME .. ": (unit)", function()
         _G.ngx = build_ngx_fixture()
 
         plugin = require("kong.plugins." .. PLUGIN_NAME .. ".handler")
-        config = {}
+        config = {write_key = "abcd"}
     end)
 
     describe("Given a valid request, when the plugin is executed,", function()
@@ -164,6 +164,7 @@ describe(PLUGIN_NAME .. ": (unit)", function()
                     split = "Grades"
                   }
                 },
+                writeKey = "abcd"
             }, segment_received_events[1])
         end)
 

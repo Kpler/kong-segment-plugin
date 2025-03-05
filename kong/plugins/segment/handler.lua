@@ -51,6 +51,7 @@ end --]]
 
 -- runs in the 'log_by_lua_block'
 function plugin:log(plugin_conf)
+    local segment_service = SegmentService:new(plugin_conf.write_key)
     local adapter = SegmentAdapter:new()
     local segmentEvent, err = adapter:convert()
 
@@ -59,7 +60,7 @@ function plugin:log(plugin_conf)
       return
     end
 
-    SegmentService.track_async(segmentEvent)
+  segment_service:track_async(segmentEvent)
 end --
 
 -- return our plugin object

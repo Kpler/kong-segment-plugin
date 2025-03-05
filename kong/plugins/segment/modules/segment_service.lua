@@ -1,10 +1,26 @@
 local http = require("resty.http")
+local constants = require("kong.plugins.segment.modules.constants")
 
 local SegmentService = {}
+SegmentService.__index = SegmentService
+local make_segment_request
+local async_http_request
 
-local SEGMENT_API = "https://api.segment.io/v1"
+function SegmentService:new(write_key)
+  local self = setmetatable({}, SegmentService)
+  self.write_key = write_key
 
-local function make_segment_request(url, json_data)
+  return self
+end
+
+function SegmentService:track_async(segmentEvent)
+  local url = constants.SEGMENT_API_BASE_URL .. "/track"
+  local json_segment_data = segmentEvent:to_json(self.write_key)
+  -- Schedule the HTTP request to be made asynchronously
+  ngx.timer.at(0, async_http_request, {url = url, json_data = json_segment_data})
+end
+
+make_segment_request = function (url, json_data)
   local httpc = http.new()
   -- Perform the request
   local res, err = httpc:request_uri(url, {
@@ -25,19 +41,12 @@ local function make_segment_request(url, json_data)
   return res.body
 end
 
-function async_http_request(premature, params)
+async_http_request = function (premature, params)
   if premature then
     return
   end
 
   make_segment_request(params.url, params.json_data)
-end
-
-function SegmentService.track_async(segmentEvent)
-  local url = SEGMENT_API .. "/track"
-  local json_segment_data = segmentEvent:to_json()
-  -- Schedule the HTTP request to be made asynchronously
-  ngx.timer.at(0, async_http_request, {url = url, json_data = json_segment_data})
 end
 
 return SegmentService
