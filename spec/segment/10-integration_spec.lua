@@ -8,21 +8,22 @@ for _, strategy in helpers.all_strategies() do
             local client
 
             lazy_setup(function()
-
-                local bp = helpers.get_db_utils(strategy == "off" and "postgres" or strategy, nil, {PLUGIN_NAME})
+                local bp = helpers.get_db_utils(strategy == "off" and "postgres" or strategy, nil, { PLUGIN_NAME })
 
                 -- Inject a test route. No need to create a service, there is a default
                 -- service which will echo the request.
                 local route1 = bp.routes:insert({
-                    hosts = {"test1.com"}
+                    hosts = { "test1.com" }
                 })
                 -- add the plugin to test to the route we created
-                bp.plugins:insert{
+                bp.plugins:insert {
                     name = PLUGIN_NAME,
                     route = {
                         id = route1.id
                     },
-                    config = {}
+                    config = {
+                        write_key = "abcd"
+                    }
                 }
 
                 -- start kong
@@ -53,7 +54,7 @@ for _, strategy in helpers.all_strategies() do
             end)
 
             describe("request", function()
-                it("gets a 'hello-world' header", function()
+                it("is successful", function()
                     local r = client:get("/request", {
                         headers = {
                             host = "test1.com"
@@ -61,30 +62,8 @@ for _, strategy in helpers.all_strategies() do
                     })
                     -- validate that the request succeeded, response status 200
                     assert.response(r).has.status(200)
-                    -- now check the request (as echoed by the mock backend) to have the header
-                    local header_value = assert.request(r).has.header("hello-world")
-                    -- validate the value of that header
-                    assert.equal("this is on a request", header_value)
                 end)
             end)
-
-            describe("response", function()
-                it("gets a 'bye-world' header", function()
-                    local r = client:get("/request", {
-                        headers = {
-                            host = "test1.com"
-                        }
-                    })
-                    -- validate that the request succeeded, response status 200
-                    assert.response(r).has.status(200)
-                    -- now check the response to have the header
-                    local header_value = assert.response(r).has.header("bye-world")
-                    -- validate the value of that header
-                    assert.equal("this is on the response", header_value)
-                end)
-            end)
-
         end)
-
     end
 end
